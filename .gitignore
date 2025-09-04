@@ -1,0 +1,28 @@
+# Ambiente virtual Python
+venv/
+
+# Arquivos de cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Arquivos temporários
+*.tmp
+*.log
+*.bak
+*.swp
+
+# Pasta de vídeos baixados
+videos/
+
+# Arquivos de configuração de IDE
+.vscode/
+.idea/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# CSVs de entrada (opcional, remova se quiser versionar)
+#*.csv 
