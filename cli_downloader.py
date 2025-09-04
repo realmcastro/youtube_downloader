@@ -50,13 +50,44 @@ def listar_csvs():
         sys.exit(1)
     return csvs
 
-# Função para menu interativo de seleção de CSVs
-def selecionar_csvs(csvs):
-    print("\nArquivos CSV encontrados:")
+# Função para juntar pares de .mp4 e .m4a com o mesmo nome base usando ffmpeg
+def juntar_audio_video_videos():
+    import glob
+    import subprocess
+    import os
+    pasta = "videos"
+    if not os.path.isdir(pasta):
+        print("Pasta 'videos/' não encontrada.")
+        return
+    arquivos_mp4 = glob.glob(os.path.join(pasta, "*.mp4"))
+    encontrou = False
+    for video in arquivos_mp4:
+        base = os.path.splitext(os.path.basename(video))[0]
+        audio = os.path.join(pasta, f"{base}.m4a")
+        if os.path.isfile(audio):
+            encontrou = True
+            muxed = os.path.join(pasta, f"{base}_muxed.mp4")
+            print(f"Juntando {video} + {audio} -> {video} (sobrescrevendo)")
+            subprocess.run([
+                "ffmpeg", "-y", "-i", video, "-i", audio,
+                "-c:v", "copy", "-c:a", "aac", "-strict", "experimental", muxed
+            ], check=True)
+            os.replace(muxed, video)
+            # Opcional: remover o áudio separado
+            # os.remove(audio)
+    if not encontrou:
+        print("Nenhum par .mp4 + .m4a encontrado para juntar.")
+
+# Função para menu interativo de seleção de CSVs ou juntar áudio/vídeo
+def selecionar_opcao(csvs):
+    print("\nOpções disponíveis:")
     for idx, csv in enumerate(csvs):
         print(f"[{idx+1}] {csv}")
+    print("[J] Juntar áudio e vídeo dos arquivos baixados")
     print("[0] Cancelar")
-    selecao = input("\nDigite os números dos CSVs separados por vírgula (ex: 1,3): ")
+    selecao = input("\nDigite os números dos CSVs separados por vírgula ou 'J' para juntar: ")
+    if selecao.strip().lower() == "j":
+        return "juntar"
     if selecao.strip() == "0":
         print("Operação cancelada.")
         sys.exit(0)
@@ -159,8 +190,12 @@ def main():
     instalar_dependencias()
     instruir_ativacao_venv()
     csvs = listar_csvs()
-    selecionados = selecionar_csvs(csvs)
-    for csv in selecionados:
+    opcao = selecionar_opcao(csvs)
+    if opcao == "juntar":
+        juntar_audio_video_videos()
+        print("\nProcesso de junção finalizado.")
+        return
+    for csv in opcao:
         if validar_csv(csv):
             baixar_videos_csv(csv)
         else:
