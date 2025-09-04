@@ -139,34 +139,24 @@ def baixar_videos_csv(caminho_csv):
         output_filename = row['file'].strip().replace('"', '')
         if not url or not output_filename:
             continue
-        # Baixar para um nome temporário
-        tmp_prefix = f"tmp_{os.path.splitext(output_filename)[0]}"
-        tmp_path = os.path.join(output_dir, tmp_prefix)
-        cmd_1080p = [
+        base_name = os.path.splitext(output_filename)[0]
+        video_path = os.path.join(output_dir, f"{base_name}.mp4")
+        audio_path = os.path.join(output_dir, f"{base_name}.audio.m4a")
+        # Baixar vídeo e áudio separados, com nomes distintos
+        cmd = [
             os.path.join(VENV_DIR, "bin", "yt-dlp"),
-            "-f", "bestvideo[height=1080][ext=mp4]+bestaudio[ext=m4a]/best[height=1080][ext=mp4]/bestvideo+bestaudio/best",
-            "--merge-output-format", "mp4",
-            "--force-overwrites",
-            "-o", tmp_path,
+            "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio",
+            "-o", os.path.join(output_dir, f"{base_name}.%(ext)s"),
             url
         ]
         try:
-            print(f"Baixando: {url} -> {output_filename}")
-            subprocess.run(cmd_1080p, check=True)
-        except subprocess.CalledProcessError:
-            print(f"Falha ao baixar 1080p, tentando melhor qualidade disponível para: {url}")
-            cmd_best = [
-                os.path.join(VENV_DIR, "bin", "yt-dlp"),
-                "-f", "bestvideo+bestaudio/best",
-                "--merge-output-format", "mp4",
-                "--force-overwrites",
-                "-o", tmp_path,
-                url
-            ]
-            subprocess.run(cmd_best, check=True)
+            print(f"Baixando vídeo e áudio separados: {url} -> {video_path}, {audio_path}")
+            subprocess.run(cmd, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Erro ao baixar {url}: {e}")
         # Após o download, renomear/mover o arquivo baixado para o nome exato da coluna 'file'
         import glob
-        baixados = glob.glob(os.path.join(output_dir, f"{tmp_prefix}*"))
+        baixados = glob.glob(os.path.join(output_dir, f"{base_name}*"))
         final_path = os.path.join(output_dir, output_filename)
         if baixados:
             # Remove arquivo final se já existir

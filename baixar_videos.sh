@@ -32,13 +32,14 @@ juntar_audio_video() {
   for video in *.mp4; do
     [ -e "$video" ] || continue
     base="${video%.mp4}"
-    audio="$base.m4a"
-    if [[ -f "$audio" ]]; then
-      echo "Juntando $video + $audio -> $video (sobrescrevendo)"
-      ffmpeg -y -i "$video" -i "$audio" -c:v copy -c:a aac -strict experimental "${base}_muxed.mp4" < /dev/null
+    # Procura qualquer arquivo de áudio com padrão NOME.audio.*
+    audio_file=$(ls "${base}.audio."* 2>/dev/null | head -n1)
+    if [[ -n "$audio_file" && -f "$audio_file" ]]; then
+      echo "Juntando $video + $audio_file -> $video (sobrescrevendo)"
+      ffmpeg -y -i "$video" -i "$audio_file" -c:v copy -c:a aac -strict experimental "${base}_muxed.mp4" < /dev/null
       mv -f "${base}_muxed.mp4" "$video"
       # Opcional: remover o áudio separado
-      # rm "$audio"
+      # rm "$audio_file"
     fi
   done
   cd ..
