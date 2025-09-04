@@ -26,5 +26,26 @@ rm requirements.txt
 
 deactivate
 
+# Função para juntar pares de .mp4 e .m4a com o mesmo nome base usando ffmpeg
+juntar_audio_video() {
+  cd videos 2>/dev/null || return 0
+  for video in *.mp4; do
+    [ -e "$video" ] || continue
+    base="${video%.mp4}"
+    audio="$base.m4a"
+    if [[ -f "$audio" ]]; then
+      echo "Juntando $video + $audio -> $video (sobrescrevendo)"
+      ffmpeg -y -i "$video" -i "$audio" -c:v copy -c:a aac -strict experimental "${base}_muxed.mp4" < /dev/null
+      mv -f "${base}_muxed.mp4" "$video"
+      # Opcional: remover o áudio separado
+      # rm "$audio"
+    fi
+  done
+  cd ..
+}
+
 # 3. Executa o cli_downloader.py usando o Python do venv
-"$VENV_DIR/bin/python" cli_downloader.py 
+"$VENV_DIR/bin/python" cli_downloader.py
+
+# Para juntar manualmente depois, execute no terminal:
+# source baixar_videos.sh && juntar_audio_video 
